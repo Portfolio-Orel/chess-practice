@@ -19,7 +19,7 @@ import javax.inject.Inject
 class BoardViewModel @Inject constructor(
     private val generateQuestionsUseCase: GenerateQuestionsUseCase
 ) : ViewModel() {
-    private var state by mutableStateOf(BoardState())
+    var state by mutableStateOf(BoardState())
 
     fun startQuiz() {
         state = state.copy(
@@ -28,24 +28,26 @@ class BoardViewModel @Inject constructor(
     }
 
     fun stopQuiz() {
-        state = state.copy(quizQuestions = null)
+        state = state.copy(quizQuestions = null, correctAnswersCount = 0, wrongAnswersCount = 0)
     }
 
     fun isQuizStarted(): Boolean = !(state.quizQuestions.isNullOrEmpty())
 
-    fun getCurrentQuestion(): QuizQuestion? =
-        state.quizQuestions?.firstOrNull { it.state == QuizQuestion.State.Default }
+    fun getCurrentQuestion(): QuizQuestion? {
+        return state.quizQuestions?.firstOrNull { it.state == QuizQuestion.State.Default }
+    }
 
     fun checkAnswer(question: QuizQuestion, answer: BoardSquareId): Boolean {
         val result = question.checkAnswer(id = answer)
-        removeSucceededQuestions()
+        setCounts()
         return result
     }
 
-
-
-    private fun removeSucceededQuestions() {
+    private fun setCounts() {
         state =
-            state.copy(quizQuestions = state.quizQuestions?.filter { it.state == QuizQuestion.State.Default })
+            state.copy(
+                correctAnswersCount = state.quizQuestions?.count { it.state == QuizQuestion.State.Correct } ?: 0,
+                wrongAnswersCount = state.quizQuestions?.count { it.state == QuizQuestion.State.Failed } ?: 0
+            )
     }
 }

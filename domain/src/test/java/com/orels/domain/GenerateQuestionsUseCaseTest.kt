@@ -12,7 +12,7 @@ import org.junit.Test
  */
 class GenerateQuestionsUseCaseTest {
 
-    private val maxRange = 2
+    private val maxRange = 1
     private val numberOfOptions = 3
     private val generateQuestionsUseCase = GenerateQuestionsUseCase()
 
@@ -26,7 +26,7 @@ class GenerateQuestionsUseCaseTest {
             check_contains_right_answer(question)
             check_options_unique(question)
             question.options.forEach { option ->
-                check_range_of_option(option = option, square = question.selectedSquare)
+                check_range_of_option(option = option, square = question.correctSquare)
             }
         }
     }
@@ -37,7 +37,7 @@ class GenerateQuestionsUseCaseTest {
     private fun check_contains_right_answer(
         question: QuizQuestion
     ) =
-        assert(question.options.contains(question.selectedSquare))
+        assert(question.options.contains(question.correctSquare))
 
     private fun check_max_number_of_questions(questions: List<QuizQuestion>) =
         assert(questions.size == GenerateQuestionsUseCase.MAX_NUMBER_OF_QUESTIONS)

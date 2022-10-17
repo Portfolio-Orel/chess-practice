@@ -21,7 +21,9 @@ class GenerateQuestionsUseCase @Inject constructor() {
      * from around the selected square
      * @param numberOfOptions is the number of options per question
      */
+    @Throws(Exception::class)
     operator fun invoke(maxRange: Int = 2, numberOfOptions: Int = 3): List<QuizQuestion> {
+        if(maxRange < 2) throw Exception("maxRange must be at least 2")
         val questions: ArrayList<QuizQuestion> = ArrayList()
         idsToUse = ArrayList(allIds)
 
@@ -34,9 +36,9 @@ class GenerateQuestionsUseCase @Inject constructor() {
             )
             questions.add(
                 QuizQuestion(
-                    selectedSquare = squareId,
+                    correctSquare = squareId,
                     options = randomOptions,
-                    maxTries = numberOfOptions - 1
+                    maxTries = 1
                 )
             )
             removeIdFromUsedIds(squareId)
@@ -84,7 +86,7 @@ class GenerateQuestionsUseCase @Inject constructor() {
         return Random.nextInt(from = lowerBoundaryNumber, until = upperBondaryNumber)
     }
 
-    private fun generateRandomSqaure(id: BoardSquareId, range: Int): BoardSquareId? {
+    private fun generateRandomSquare(id: BoardSquareId, range: Int): BoardSquareId? {
         val randomLetter = generateRandomLetter(id = id, range = range) ?: return null
         val randomNumber = generateRandomNumber(id = id, range = range)
         return BoardSquareId.convert(letter = randomLetter, number = randomNumber)
@@ -103,9 +105,9 @@ class GenerateQuestionsUseCase @Inject constructor() {
         val options = ArrayList<BoardSquareId>()
         options.add(squareId)
         for (i in 0 until count - 1) {
-            var randomSquare =  generateRandomSqaure(id = squareId, range = range)
+            var randomSquare =  generateRandomSquare(id = squareId, range = range)
             while(options.contains(randomSquare)) {
-                randomSquare = generateRandomSqaure(id = squareId, range = range)
+                randomSquare = generateRandomSquare(id = squareId, range = range)
             }
             randomSquare?.let {
                 options.add(it)

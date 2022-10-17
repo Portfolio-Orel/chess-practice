@@ -8,5 +8,10 @@ import com.orels.domain.model.QuizQuestion
  */
 data class BoardState(
     val isLoading: Boolean = false,
-    val quizQuestions: List<QuizQuestion>? = null
-)
+    val quizQuestions: List<QuizQuestion>? = null,
+    val correctAnswersCount: Int = 0,
+    val wrongAnswersCount: Int = 0,
+) {
+    val totalQuestionsCount: Int
+        get() = quizQuestions?.size ?: 0
+}

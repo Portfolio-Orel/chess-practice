@@ -6,37 +6,41 @@ package com.orels.domain.model
  */
 
 class QuizQuestion(
-    val selectedSquare: BoardSquareId,
+    val correctSquare: BoardSquareId,
     val options: List<BoardSquareId>,
     private val maxTries: Int = 1
 ) {
 
     private var tries: List<BoardSquareId> = emptyList()
 
-    private val triesDone: Int
+    private val totalTries: Int
         get() = tries.size
 
     var state = State.Default
 
-    fun checkAnswer(id: BoardSquareId): Boolean =
-        if (triesDone >= maxTries) {
-            false
-        } else if (id == selectedSquare) {
-            state = State.Succeeded
+    fun checkAnswer(id: BoardSquareId): Boolean {
+        tries = tries + id
+        return if (id == correctSquare && totalTries <= maxTries) {
+            state = State.Correct
             true
         } else {
-            tries = tries + id
-            if (triesDone >= maxTries) {
+            if (totalTries >= maxTries) {
                 state = State.Failed
             }
             false
         }
+    }
 
     fun isOptionDisabled(id: BoardSquareId): Boolean = tries.contains(id)
 
+    /**
+     * [Default] tries < maxTries and no correct answer was provided
+     * [Correct] a correct answer was provided before tries.size >= maxTries
+     * [Failed] [maxTries] wrong answers were provided and the question is failed.
+     */
     enum class State {
         Default,
-        Succeeded,
+        Correct,
         Failed;
     }
 }

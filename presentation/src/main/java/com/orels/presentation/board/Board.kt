@@ -1,5 +1,7 @@
 package com.orels.presentation.board
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -9,6 +11,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -28,6 +31,7 @@ import com.orels.presentation.board.components.BoardSquare
  * 16/10/2022
  */
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Board(modifier: Modifier = Modifier, viewModel: BoardViewModel = hiltViewModel()) {
     val listState = rememberLazyGridState()
@@ -35,70 +39,81 @@ fun Board(modifier: Modifier = Modifier, viewModel: BoardViewModel = hiltViewMod
     val boardPadding: Dp = 8.dp
     val boardSquareSize: Dp = ((configuration.screenWidthDp / 8).dp - boardPadding)
 
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+    val state = viewModel.state
+    CompositionLocalProvider(
+        LocalOverscrollConfiguration provides null
     ) {
-        Box {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(8),
-                modifier = Modifier
-                    .fillMaxWidth(),
-                state = listState,
-                contentPadding = PaddingValues(boardPadding),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
-                horizontalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                items(
-                    count = BoardSquareId.values().size,
-                    key = { index ->
-                        index
-                    }
-                ) { index ->
-                    val id = BoardSquareId.values()[BoardSquareId.values().size - 1 - index]
-                    BoardSquare(
-                        modifier = Modifier
-                            .size(boardSquareSize),
-                        id = id,
-                        disabled = viewModel.isQuizStarted() && viewModel.getCurrentQuestion()?.selectedSquare != id
-                    )
-                }
-            }
-        }
-        if (viewModel.isQuizStarted()) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = modifier,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            Box {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(8),
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    state = listState,
+                    contentPadding = PaddingValues(boardPadding),
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
+                    horizontalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
-                    val question = viewModel.getCurrentQuestion()
-                    question?.options?.forEach { id ->
-                        OptionButton(
-                            id = id, question = question, onClick = viewModel::checkAnswer,
-                            enabled = !question.isOptionDisabled(id)
+                    items(
+                        count = BoardSquareId.values().size,
+                        key = { index ->
+                            index
+                        }
+                    ) { index ->
+                        val id = BoardSquareId.values()[BoardSquareId.values().size - 1 - index]
+                        BoardSquare(
+                            modifier = Modifier
+                                .size(boardSquareSize),
+                            id = id,
+                            disabled = viewModel.isQuizStarted() && viewModel.getCurrentQuestion()?.correctSquare != id
                         )
                     }
                 }
-                Spacer(Modifier.weight(1f))
+            }
+            if (viewModel.isQuizStarted()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val question = viewModel.getCurrentQuestion()
+                        question?.options?.forEach { id ->
+                            OptionButton(
+                                id = id, question = question, onClick = viewModel::checkAnswer,
+                                enabled = !question.isOptionDisabled(id)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    QuestionsCountDetails(
+                        correctAnswers = state.correctAnswersCount,
+                        wrongAnswers = state.wrongAnswersCount,
+                        totalQuestions = state.totalQuestionsCount
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Button(
+                        colors = ButtonDefaults.buttonColors(
+                            MaterialTheme.colorScheme.primary,
+                        ), onClick = viewModel::stopQuiz
+                    ) {
+                        Text(text = stringResource(R.string.end_quiz))
+                    }
+                }
+            } else {
                 Button(
                     colors = ButtonDefaults.buttonColors(
                         MaterialTheme.colorScheme.primary,
-                    ), onClick = viewModel::stopQuiz
+                    ), onClick = viewModel::startQuiz
                 ) {
-                    Text(text = stringResource(R.string.end_quiz))
+                    Text(text = stringResource(R.string.start_quiz))
                 }
-            }
-        } else {
-            Button(
-                colors = ButtonDefaults.buttonColors(
-                    MaterialTheme.colorScheme.primary,
-                ), onClick = viewModel::startQuiz
-            ) {
-                Text(text = stringResource(R.string.start_quiz))
             }
         }
     }
@@ -130,4 +145,49 @@ fun OptionButton(
             )
         }
     }
+}
+
+@Composable
+fun QuestionsCountDetails(
+    correctAnswers: Int,
+    wrongAnswers: Int,
+    totalQuestions: Int,
+    modifier: Modifier = Modifier
+) {
+
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "$wrongAnswers",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "$correctAnswers",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            }
+            Text(
+                text = "${correctAnswers + wrongAnswers}/$totalQuestions",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+
+    }
+
 }
