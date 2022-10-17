@@ -23,11 +23,21 @@ class GenerateQuestionsUseCaseTest {
         check_max_number_of_questions(questions = questions)
         questions.forEach { question ->
             check_number_of_options(question)
+            check_contains_right_answer(question)
+            check_options_unique(question)
             question.options.forEach { option ->
                 check_range_of_option(option = option, square = question.selectedSquare)
             }
         }
     }
+
+    private fun check_options_unique(question: QuizQuestion) =
+        assert(question.options.toSet().size == question.options.size)
+
+    private fun check_contains_right_answer(
+        question: QuizQuestion
+    ) =
+        assert(question.options.contains(question.selectedSquare))
 
     private fun check_max_number_of_questions(questions: List<QuizQuestion>) =
         assert(questions.size == GenerateQuestionsUseCase.MAX_NUMBER_OF_QUESTIONS)

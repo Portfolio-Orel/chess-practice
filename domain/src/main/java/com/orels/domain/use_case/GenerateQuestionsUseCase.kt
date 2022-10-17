@@ -2,13 +2,14 @@ package com.orels.domain.use_case
 
 import com.orels.domain.model.BoardSquareId
 import com.orels.domain.model.QuizQuestion
+import javax.inject.Inject
 import kotlin.random.Random
 
 /**
  * @author Orel Zilberman
  * 17/10/2022
  */
-class GenerateQuestionsUseCase {
+class GenerateQuestionsUseCase @Inject constructor() {
 
     private val allIds = BoardSquareId.values().toList()
     private var idsToUse: ArrayList<BoardSquareId> = ArrayList()
@@ -100,12 +101,17 @@ class GenerateQuestionsUseCase {
         count: Int = 3
     ): List<BoardSquareId> {
         val options = ArrayList<BoardSquareId>()
-        for (i in 0 until count) {
-            generateRandomSqaure(id = squareId, range = range)?.let {
+        options.add(squareId)
+        for (i in 0 until count - 1) {
+            var randomSquare =  generateRandomSqaure(id = squareId, range = range)
+            while(options.contains(randomSquare)) {
+                randomSquare = generateRandomSqaure(id = squareId, range = range)
+            }
+            randomSquare?.let {
                 options.add(it)
             }
         }
-        return options
+        return options.shuffled()
     }
 
     companion object {

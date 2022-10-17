@@ -12,6 +12,8 @@ import com.orels.domain.model.BoardSquareId
  * 16/10/2022
  */
 
+typealias OnBoardSquareClick = (BoardSquareId) -> Unit
+
 @Composable
 fun BoardSquare(
     id: BoardSquareId,

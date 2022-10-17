@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.orels.domain.model.BoardSquareId
 import com.orels.domain.model.QuizQuestion
+import com.orels.domain.use_case.GenerateQuestionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -15,11 +16,15 @@ import javax.inject.Inject
  */
 
 @HiltViewModel
-class BoardViewModel @Inject constructor() : ViewModel() {
-    var state by mutableStateOf(BoardState())
+class BoardViewModel @Inject constructor(
+    private val generateQuestionsUseCase: GenerateQuestionsUseCase
+) : ViewModel() {
+    private var state by mutableStateOf(BoardState())
 
     fun startQuiz() {
-        generateQuizQuestions()
+        state = state.copy(
+            quizQuestions = generateQuestionsUseCase()
+        )
     }
 
     fun stopQuiz() {
@@ -37,22 +42,10 @@ class BoardViewModel @Inject constructor() : ViewModel() {
         return result
     }
 
+
+
     private fun removeSucceededQuestions() {
         state =
             state.copy(quizQuestions = state.quizQuestions?.filter { it.state == QuizQuestion.State.Default })
-    }
-
-    private fun generateQuizQuestions() {
-        state = state.copy(
-            quizQuestions = listOf(
-                QuizQuestion(
-                    selectedSquare = BoardSquareId.A1, options = listOf(
-                        BoardSquareId.A1,
-                        BoardSquareId.A2,
-                        BoardSquareId.A3
-                    )
-                )
-            )
-        )
     }
 }
