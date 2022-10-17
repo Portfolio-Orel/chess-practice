@@ -1,6 +1,5 @@
 package com.orels.presentation.board
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -12,15 +11,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.orels.domain.model.BoardSquareId
+import com.orels.domain.model.QuizQuestion
 import com.orels.presentation.R
 import com.orels.presentation.board.components.BoardSquare
-import com.orels.presentation.board.components.BoardSquareId
 
 /**
  * @author Orel Zilberman
@@ -35,17 +36,15 @@ fun Board(modifier: Modifier = Modifier, viewModel: BoardViewModel = hiltViewMod
     val boardSquareSize: Dp = ((configuration.screenWidthDp / 8).dp - boardPadding)
 
     Column(
-        modifier = modifier
-            .background(Color.Green),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Box() {
+        Box {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(8),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Red),
+                    .fillMaxWidth(),
                 state = listState,
                 contentPadding = PaddingValues(boardPadding),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
@@ -62,8 +61,7 @@ fun Board(modifier: Modifier = Modifier, viewModel: BoardViewModel = hiltViewMod
                         modifier = Modifier
                             .size(boardSquareSize),
                         id = id,
-                        onClick = { println(BoardSquareId.values()[index]) },
-                        shouldOpaque = viewModel.isQuizStarted() && viewModel.getCurrentQuestion()?.selectedSquare != id
+                        disabled = viewModel.isQuizStarted() && viewModel.getCurrentQuestion()?.selectedSquare != id
                     )
                 }
             }
@@ -79,19 +77,19 @@ fun Board(modifier: Modifier = Modifier, viewModel: BoardViewModel = hiltViewMod
                 ) {
                     val question = viewModel.getCurrentQuestion()
                     question?.options?.forEach { id ->
-                        Button(colors = ButtonDefaults.buttonColors(
-                            MaterialTheme.colorScheme.primary,
-                        ), onClick = { question.checkAnswer(id) }) {
-                            Text(text = "$id")
-                        }
+                        OptionButton(
+                            id = id, question = question, onClick = viewModel::checkAnswer,
+                            enabled = !question.isOptionDisabled(id)
+                        )
                     }
                 }
+                Spacer(Modifier.weight(1f))
                 Button(
                     colors = ButtonDefaults.buttonColors(
                         MaterialTheme.colorScheme.primary,
                     ), onClick = viewModel::stopQuiz
                 ) {
-                        Text(text = stringResource(R.string.end_quiz))
+                    Text(text = stringResource(R.string.end_quiz))
                 }
             }
         } else {
@@ -102,6 +100,34 @@ fun Board(modifier: Modifier = Modifier, viewModel: BoardViewModel = hiltViewMod
             ) {
                 Text(text = stringResource(R.string.start_quiz))
             }
+        }
+    }
+}
+
+@Composable
+fun OptionButton(
+    id: BoardSquareId,
+    question: QuizQuestion,
+    onClick: (QuizQuestion, BoardSquareId) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Button(
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            MaterialTheme.colorScheme.primary,
+        ),
+        enabled = enabled,
+        onClick = { onClick(question, id) }) {
+        if (enabled) {
+            Text(
+                text = "$id",
+            )
+        } else {
+            Text(
+                text = "$id",
+                style = TextStyle(textDecoration = TextDecoration.LineThrough)
+            )
         }
     }
 }
